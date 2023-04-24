@@ -80,7 +80,7 @@ export function ChatGPT({
       {chatMessages.map((message) => {
         return (
           <div key={message.content}>
-            <p className="text-lg text-slate-600">
+            <p className="text-lg text-base-600">
               {message.role === "system" || message.role === "user"
                 ? "User"
                 : person}

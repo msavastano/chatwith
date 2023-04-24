@@ -94,7 +94,7 @@ export default function ChatPage() {
           name="persona"
           type="text"
           placeholder="a very helpful assistant"
-          className="input-bordered input-primary input m-2 w-1/3"
+          className="input-bordered input m-2 w-1/3"
         />
         <button className="btn-primary btn" onClick={handlePersonaSet}>
           Set
@@ -105,7 +105,7 @@ export default function ChatPage() {
               <span className="label-text">Generate Image</span>
               <input
                 type="checkbox"
-                className="toggle-primary toggle"
+                className="toggle toggle-primary"
                 checked={isImage}
                 onChange={handleInputChange}
               />
@@ -115,15 +115,15 @@ export default function ChatPage() {
       </div>
 
       {personaSend && (
-        <div className="m-4 rounded-lg border-2 border-gray-900 p-4">
+        <div className="m-4 rounded-lg border-2 border-base-900 p-4">
           {image ? (
             <img
-              className="m-2 mx-auto w-32 rounded-xl border-2 border-gray-900"
+              className="m-2 mx-auto w-32 rounded-xl border-2 border-base-900"
               alt={persona}
               src={image?.data[0].url}
             />
           ) : (
-            noImage && isImage &&  <p className="m-2 mx-auto w-32 rounded-xl border-2 border-gray-900 p-1">{noImage}</p>
+            noImage && isImage &&  <p className="m-2 mx-auto w-32 rounded-xl border-2 border-base-900 p-1">{noImage}</p>
           )}
           <p className="flex justify-center text-3xl">
             Chat with {personaSend}
@@ -136,7 +136,7 @@ export default function ChatPage() {
               name="search"
               type="text"
               placeholder="Prompt"
-              className="input-bordered input-primary input mr-2 w-full"
+              className="input-bordered input mr-2 w-full"
               disabled={completionLoading}
             />
             <button className="btn-primary btn" onClick={handleSend}>
