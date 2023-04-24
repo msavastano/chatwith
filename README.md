@@ -1,6 +1,10 @@
-# Welcome to Remix!
+# ChatWith
 
-- [Remix Docs](https://remix.run/docs)
+- Say hi to anyone.  Powered by ChatGPT
+   - Dall-E
+   - GPT 4
+   -ChatGPT 3.5 turbo
+      - Add your ChatGpt key
 
 ## Development
 
@@ -16,26 +20,3 @@ $ npm run dev
 Your file changes are watched, and assets are rebuilt upon change.
 
 Open up [http://localhost:3333](http://localhost:3333) and you should be ready to go!
-
-## Deploying
-
-Before you can deploy, you'll need to do some setup with AWS:
-
-- First [install the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
-- Then [follow the Architect setup instructions](https://arc.codes/docs/en/guides/get-started/detailed-aws-setup).
-
-If you make it through all of that, you're ready to deploy!
-
-1. build the app for production:
-
-   ```sh
-   npm run build
-   ```
-
-2. Deploy with `arc`
-
-   ```sh
-   arc deploy production
-   ```
-
-You're in business!

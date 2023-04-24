@@ -1,8 +1,8 @@
 import * as React from "react";
 import type { ChatCompletionResponseMessage } from "openai";
-import { Configuration, OpenAIApi } from "openai";
 import { useEffect, useState } from "react";
-import TypingText from "./TypingText";
+import type { ClientStreamChatCompletionConfig } from "openai-ext";
+import { OpenAIExt } from "openai-ext";
 
 export function ChatGPT({
   apikey,
@@ -11,13 +11,19 @@ export function ChatGPT({
   setPrompt,
   completionLoading,
   setCompletionLoading,
+  model,
+  setApiError,
+  temp,
 }: {
   apikey: string | undefined;
   prompt: string;
   persona: string;
-  setPrompt: (value: React.SetStateAction<string>) => void
-  setCompletionLoading: (value: React.SetStateAction<boolean>) => void
+  setPrompt: (value: React.SetStateAction<string>) => void;
+  setCompletionLoading: (value: React.SetStateAction<boolean>) => void;
   completionLoading: boolean;
+  model: string;
+  setApiError: React.Dispatch<React.SetStateAction<string>>;
+  temp: string;
 }) {
   const person = persona;
   const initMessages: Array<ChatCompletionResponseMessage> = [
@@ -31,45 +37,59 @@ export function ChatGPT({
   const [chatMessages, setChatMessages] =
     useState<Array<ChatCompletionResponseMessage>>(initMessages);
 
-  const configuration = new Configuration({
-    apiKey: apikey,
-  });
-  const openai = new OpenAIApi(configuration);
-
-  async function callGPT() {
-    return await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      temperature: 0.8,
-      messages: [...messages, { role: "user", content: prompt }],
-    });
-  }
+  const streamConfig: ClientStreamChatCompletionConfig = {
+    apiKey: apikey || '', // Your API key
+    handler: {
+      onContent(content, isFinal, xhr) {
+        if (content) {
+          setMessages([
+            ...messages,
+            { role: "user", content: prompt },
+            { role: "assistant", content },
+          ]);
+          setChatMessages([
+            { role: "user", content: prompt },
+            { role: "assistant", content },
+            ...chatMessages,
+          ]);
+        }
+      },
+      onDone(xhr) {
+        console.log("Done!");
+        setApiError('');
+        console.debug("[EventSource]", xhr.responseText);
+        setPrompt('');
+        setCompletionLoading(false);
+      },
+      onError(error, status, xhr) {
+        const err = JSON.parse(xhr.responseText);
+        setApiError(err.error.message);
+        setPrompt('');
+        setCompletionLoading(false);
+      },
+    },
+  };
 
   useEffect(() => {
     if (prompt) {
       setCompletionLoading(true);
-      callGPT().then((r) => {
-        console.log(r.data);
-        if (r.data.choices[0].message) {
-          setMessages([
-            ...messages,
-            { role: "user", content: prompt },
-            r.data.choices[0].message,
-          ]);
-          setChatMessages([
-            { role: "user", content: prompt },
-            r.data.choices[0].message,
-            ...chatMessages,
-          ]);
-        }
-      }).finally(() => { 
-        setPrompt('');
-        setCompletionLoading(false) });
+      const num = parseInt(temp) * 0.1;
+      OpenAIExt.streamClientChatCompletion(
+        {
+          model,
+          temperature: parseFloat(num.toFixed(1)),
+          messages: [...messages, { role: "user", content: prompt }],
+        },
+        streamConfig
+      );
     }
   }, [prompt]);
 
   useEffect(() => {
-    setMessages(initMessages);
-    setChatMessages(initMessages);
+    if (persona) {
+      setMessages(initMessages);
+      setChatMessages(initMessages);
+    }
   }, [persona]);
 
   return (
@@ -80,7 +100,7 @@ export function ChatGPT({
       {chatMessages.map((message) => {
         return (
           <div key={message.content}>
-            <p className="text-lg text-slate-600">
+            <p className="text-base-600 text-lg font-bold italic text-red-950">
               {message.role === "system" || message.role === "user"
                 ? "User"
                 : person}
@@ -90,7 +110,7 @@ export function ChatGPT({
               <p className="text-xl">{message.content}</p>
             ) : (
               <>
-                <TypingText text={message.content} delay={20} />
+                <p className="text-xl">{message.content}</p>
                 <div className="divider"></div>
               </>
             )}
