@@ -22,7 +22,7 @@ export default function ChatPage() {
   const [image, setImage] = useState<ImagesResponse>();
   const [noImage, setNoImage] = useState('')
   const [isImage, setIsImage] = useState(false);
-  const [streaming, setStreaming] = useState(false);
+  const [streaming, setStreaming] = useState(true);
 
   const configuration = new Configuration({
     apiKey: data.apikey,
