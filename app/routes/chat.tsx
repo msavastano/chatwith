@@ -22,12 +22,18 @@ export default function ChatPage() {
   const [image, setImage] = useState<ImagesResponse>();
   const [noImage, setNoImage] = useState('')
   const [isImage, setIsImage] = useState(false);
+  const [streaming, setStreaming] = useState(false);
+
   const configuration = new Configuration({
     apiKey: data.apikey,
   });
 
   const handleInputChange = () => {
     setIsImage(!isImage);
+  };
+  
+  const handleStreamChange = () => {
+    setStreaming(!streaming);
   };
 
   const openai = new OpenAIApi(configuration);
@@ -112,6 +118,19 @@ export default function ChatPage() {
             </label>
           </div>
         </div>
+        <div className="flex flex-col">
+          <div className="form-control w-52">
+            <label className="label cursor-pointer">
+              <span className="label-text">Stream Response</span>
+              <input
+                type="checkbox"
+                className="toggle toggle-primary"
+                checked={streaming}
+                onChange={handleStreamChange}
+              />
+            </label>
+          </div>
+        </div>
       </div>
 
       {personaSend && (
@@ -150,6 +169,7 @@ export default function ChatPage() {
             setPrompt={setPrompt}
             completionLoading={completionLoading}
             setCompletionLoading={setCompletionLoading}
+            streaming={streaming}
           />
         </div>
       )}
