@@ -64,6 +64,8 @@ export function ChatGPT({
       },
       onError(error, status, xhr) {
         console.error(error);
+        setPrompt("");
+        setCompletionLoading(false);
       },
     },
   };

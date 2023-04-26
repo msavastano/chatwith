@@ -2,7 +2,7 @@ import { useLoaderData } from "@remix-run/react";
 import type { LoaderArgs } from "@remix-run/server-runtime";
 import { json } from "@remix-run/server-runtime";
 import type { ImagesResponse } from "openai";
-import type { ChangeEvent } from "react";
+import type { ChangeEvent} from "react";
 import { Configuration, OpenAIApi } from "openai";
 import { useState } from "react";
 import { ChatGPT } from "~/components/ChatGPT";
@@ -23,9 +23,11 @@ export default function ChatPage() {
   const [noImage, setNoImage] = useState('')
   const [isImage, setIsImage] = useState(false);
   const [streaming, setStreaming] = useState(true);
+  const [key, setKey] = useState('');
+  const [useKey, setUseKey] = useState('');
 
   const configuration = new Configuration({
-    apiKey: data.apikey,
+    apiKey: useKey || data.apikey,
   });
 
   const handleInputChange = () => {
@@ -49,6 +51,15 @@ export default function ChatPage() {
     setPrompt(e.target.value);
     e.preventDefault();
   };
+
+  const handleKeyChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setKey(e.target.value);
+  }
+
+  const handleKeySet = () => {
+    setUseKey(key);
+    setKey('');
+  }
 
   const handleSend = () => {
     setPromptSend(prompt);
@@ -92,6 +103,20 @@ export default function ChatPage() {
         Set a Persona and Chat (to clear context refresh browser or set another
         persona)
       </p>
+      <div className="m-4">
+        <input
+          value={key}
+          onChange={handleKeyChange}
+          id="key"
+          name="key"
+          type="text"
+          placeholder="OpenAI API Key"
+          className="input-bordered input m-2 w-1/3"
+        />
+        <button className="btn-primary btn" onClick={handleKeySet}>
+          Use
+        </button>
+      </div>
       <div className="m-4">
         <input
           value={persona}
@@ -163,7 +188,7 @@ export default function ChatPage() {
             </button>
           </div>
           <ChatGPT
-            apikey={data.apikey}
+            apikey={useKey || data.apikey}
             prompt={promptSend}
             persona={personaSend}
             setPrompt={setPrompt}
