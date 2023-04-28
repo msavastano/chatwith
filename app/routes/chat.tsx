@@ -6,14 +6,35 @@ import type { ChangeEvent} from "react";
 import { Configuration, OpenAIApi } from "openai";
 import { useState } from "react";
 import { ChatGPT } from "~/components/ChatGPT";
+import type { AtpSessionEvent, AtpSessionData } from '@atproto/api';
+import { BskyAgent } from '@atproto/api';
+// import bsky from '@atproto/api';
+// const { BskyAgent } = bsky;
 
 export async function loader({ params, request }: LoaderArgs) {
   const apikey = process.env.OPENAI_API_KEY;
+  // const agent: BskyAgent = new BskyAgent({
+  //   service: 'https://bsky.social',
+  //   persistSession: (evt: AtpSessionEvent, sess?: AtpSessionData) => {
+  //     // store the session-data for reuse
+  //   },
+  // });
+  // await agent.login({
+  //   identifier: process.env.BSKY_USERNAME!,
+  //   password: process.env.BSKY_PASSWORD!,
+  // });
+
+  // const followers = await agent.getFollowers({
+  //   actor: 'emsav.bsky.social',
+  // });
+
+  // console/log(followers);
   return json({ apikey });
 }
 
 export default function ChatPage() {
   const data = useLoaderData<typeof loader>();
+  
   const [prompt, setPrompt] = useState("");
   const [promptSend, setPromptSend] = useState("");
   const [persona, setPersona] = useState("");
@@ -191,6 +212,7 @@ export default function ChatPage() {
             apikey={useKey || data.apikey}
             prompt={promptSend}
             persona={personaSend}
+            setPersona={setPersonaSend}
             setPrompt={setPrompt}
             completionLoading={completionLoading}
             setCompletionLoading={setCompletionLoading}

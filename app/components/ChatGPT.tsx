@@ -13,7 +13,8 @@ export function ChatGPT({
   setPrompt,
   completionLoading,
   setCompletionLoading,
-  streaming
+  streaming,
+  setPersona,
 }: {
   apikey: string | undefined;
   prompt: string;
@@ -22,6 +23,7 @@ export function ChatGPT({
   setCompletionLoading: (value: React.SetStateAction<boolean>) => void;
   completionLoading: boolean;
   streaming: boolean;
+  setPersona: (value: React.SetStateAction<string>) => void;
 }) {
   const person = persona;
   const initMessages: Array<ChatCompletionResponseMessage> = [
@@ -66,6 +68,9 @@ export function ChatGPT({
         console.error(error);
         setPrompt("");
         setCompletionLoading(false);
+        setPersona("");
+        setChatMessages(initMessages)
+        setMessages(initMessages)
       },
     },
   };
@@ -96,6 +101,15 @@ export function ChatGPT({
                 ...chatMessages,
               ]);
             }
+          })
+          .catch((e) => {
+            setChatMessages(initMessages)
+            setMessages(initMessages)
+            console.log(e)
+            setPrompt("");
+            setCompletionLoading(false);
+            setPersona("")
+            
           })
           .finally(() => {
             setPrompt("");
