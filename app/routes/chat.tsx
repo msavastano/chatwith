@@ -3,38 +3,21 @@ import type { LoaderArgs } from "@remix-run/server-runtime";
 import { json } from "@remix-run/server-runtime";
 import type { ImagesResponse } from "openai";
 import type { ChangeEvent} from "react";
+import { useEffect } from "react";
 import { Configuration, OpenAIApi } from "openai";
 import { useState } from "react";
 import { ChatGPT } from "~/components/ChatGPT";
-import type { AtpSessionEvent, AtpSessionData } from '@atproto/api';
-import { BskyAgent } from '@atproto/api';
-// import bsky from '@atproto/api';
-// const { BskyAgent } = bsky;
+import { useFetcher } from "@remix-run/react";
 
 export async function loader({ params, request }: LoaderArgs) {
   const apikey = process.env.OPENAI_API_KEY;
-  // const agent: BskyAgent = new BskyAgent({
-  //   service: 'https://bsky.social',
-  //   persistSession: (evt: AtpSessionEvent, sess?: AtpSessionData) => {
-  //     // store the session-data for reuse
-  //   },
-  // });
-  // await agent.login({
-  //   identifier: process.env.BSKY_USERNAME!,
-  //   password: process.env.BSKY_PASSWORD!,
-  // });
-
-  // const followers = await agent.getFollowers({
-  //   actor: 'emsav.bsky.social',
-  // });
-
-  // console/log(followers);
   return json({ apikey });
 }
 
 export default function ChatPage() {
+  const follows = useFetcher();
+  const feed = useFetcher();
   const data = useLoaderData<typeof loader>();
-  
   const [prompt, setPrompt] = useState("");
   const [promptSend, setPromptSend] = useState("");
   const [persona, setPersona] = useState("");
@@ -47,6 +30,20 @@ export default function ChatPage() {
   const [key, setKey] = useState('');
   const [useKey, setUseKey] = useState('');
 
+  // useEffect(() => {
+  //   console.log(follows)
+  //   if (follows.type === "init") {
+  //     follows.load('/loaders/followers');
+  //   }
+  // }, [follows]);
+
+  // useEffect(() => {
+  //   console.log(feed)
+  //   if (feed.type === "init") {
+  //     feed.load('/loaders/feed');
+  //   }
+  // }, [feed]);
+
   const configuration = new Configuration({
     apiKey: useKey || data.apikey,
   });
@@ -54,7 +51,7 @@ export default function ChatPage() {
   const handleInputChange = () => {
     setIsImage(!isImage);
   };
-  
+
   const handleStreamChange = () => {
     setStreaming(!streaming);
   };
@@ -113,6 +110,24 @@ export default function ChatPage() {
 
   return (
     <div className="m-10">
+      {feed.state === 'loading' && (
+        <h1>LOADING</h1>
+      )}
+      {feed.data && (
+        <>
+          <h1>{feed.data.feed.data.feed[1].post.author.handle}</h1>
+          <h1>{feed.data.feed.data.feed[1].post.record.text}</h1>
+        </>
+      )}
+
+      {follows.state === 'loading' && (
+        <h1>LOADING</h1>
+      )}
+      {follows.data && (
+        <>
+          <h1>{follows.data.follows.data.followers[1].handle}</h1>
+        </>
+      )}
       <div className="hero min-h-fit bg-base-200">
         <div className="hero-content text-center">
           <div className="max-w-md">
@@ -188,7 +203,7 @@ export default function ChatPage() {
               src={image?.data[0].url}
             />
           ) : (
-            noImage && isImage &&  <p className="m-2 mx-auto w-32 rounded-xl border-2 border-base-900 p-1">{noImage}</p>
+            noImage && isImage && <p className="m-2 mx-auto w-32 rounded-xl border-2 border-base-900 p-1">{noImage}</p>
           )}
           <p className="flex justify-center text-3xl">
             Chat with {personaSend}
