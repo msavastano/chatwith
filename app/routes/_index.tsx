@@ -31,7 +31,7 @@ export default function Index() {
   const [useKey, setUseKey] = useState('');
   const [model, setModel] = useState("gpt-3.5-turbo");
   const [apiError, setApiError] = useState('');
-  const [temp, setTemp] = useState("10");
+  const [temp, setTemp] = useState("5");
   const [generatingImage, setGeneratingImage] = useState(false);
 
   const configuration = new Configuration({
@@ -149,7 +149,7 @@ export default function Index() {
 
       <div className="flex flex-wrap justify-around lg:flex-row-reverse lg:flex-nowrap">
         {!data.apikey && (
-          <div className="m-5 sm:w-full lg:w-1/2">
+          <div className="m-5 w-full lg:w-1/2">
             <div className="card w-auto bg-base-100 shadow-xl">
               <div className="card-body">
                 <h2 className="card-title">API Key</h2>
@@ -195,11 +195,8 @@ export default function Index() {
             </div>
           </div>
         )}
-        <div className="m-5 sm:w-full lg:w-1/2">
-          <p className="mt-3 text-xl">
-            SET A PERSONA AND PROMPT TO START CHATTING
-          </p>
-          <div className="m-4">
+        <div className="m-5 w-full lg:w-1/2">
+          <div>
             <input
               value={persona}
               onChange={handlePersonaChange}
@@ -207,7 +204,7 @@ export default function Index() {
               name="persona"
               type="text"
               placeholder="a very helpful assistant"
-              className="input-bordered input m-2 w-1/2"
+              className="input m-2 w-10/12 border border-spacing-1 shadow-md rounded-lg"
             />
             <button
               className="btn-primary btn"
@@ -217,10 +214,10 @@ export default function Index() {
               Set
             </button>
 
-            <div className="flex flex-col">
-              <div className="form-control w-72 border border-spacing-1 border-primary rounded-lg m-1">
+            <div className="flex flex-row">
+              <div className="form-control xl:w-1/3 border border-spacing-1 shadow-sm rounded-lg m-1">
                 <label className="label cursor-pointer">
-                  <span className="label-text">ChatGPT 3.5 turbo</span>
+                  <span className="label-text mr-1">GPT-4</span>
                   <input
                     type="checkbox"
                     className="toggle-primary toggle"
@@ -228,14 +225,9 @@ export default function Index() {
                     onChange={handleModelChange}
                     disabled={Boolean(personaSend)}
                   />
-                  <span className="label-text">GPT-4</span>
                 </label>
-              </div>
-            </div>
-            <div className="flex flex-col">
-              <div className="form-control w-52 border border-spacing-1 border-primary rounded-lg m-1">
                 <label className="label cursor-pointer">
-                  <span className="label-text">Generate Image</span>
+                  <span className="label-text mr-1">Generate Image</span>
                   <input
                     type="checkbox"
                     className="toggle-primary toggle"
@@ -250,12 +242,12 @@ export default function Index() {
               disabled={Boolean(personaSend)}
               onChange={handleRangeChange}
               type="range"
-              min={5}
-              max={15}
+              min={1}
+              max={10}
               value={temp}
-              className="range range-primary mr-10 mt-5 disabled:opacity-30"
+              className="range range-primary mr-10 mt-5 disabled:opacity-30 w-11/12"
             />
-            <div className="flex w-full justify-between px-2 text-xs">
+            <div className="flex w-11/12 justify-between px-2 text-xs">
               <span>CONSICE</span>
               <span>|</span>
               <span>|</span>

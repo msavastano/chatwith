@@ -77,8 +77,9 @@ export function ChatGPT({
       OpenAIExt.streamClientChatCompletion(
         {
           model,
-          temperature: parseFloat(num.toFixed(1)),
+          temperature: null,  // parseFloat(num.toFixed(1)),
           messages: [...messages, { role: "user", content: prompt }],
+          top_p: parseFloat(num.toFixed(1)),
         },
         streamConfig
       );
@@ -98,22 +99,15 @@ export function ChatGPT({
         <progress className="progress w-56"></progress>
       ) : null}
       {chatMessages.map((message) => {
+        const cl = message.role !== 'system' && message.role !== 'user' ? 'bg-gray-200 mb-7 mt-2 mr-2 ml-2' : 'bg-inherit m-2'
         return (
-          <div key={message.content}>
+          <div key={message.content} className={`${cl} p-3 border border-spacing-1 shadow-md rounded-lg`}>
             <p className="text-base-600 text-lg font-bold italic text-red-950">
               {message.role === "system" || message.role === "user"
-                ? "User"
-                : person}
-              :
+                ? ""
+                : `${person}`}
             </p>
-            {message.role === "system" || message.role === "user" ? (
-              <p className="text-xl">{message.content}</p>
-            ) : (
-              <>
-                <p className="text-xl">{message.content}</p>
-                <div className="divider"></div>
-              </>
-            )}
+            <p className="text-xl">{message.content}</p>
           </div>
         );
       })}
