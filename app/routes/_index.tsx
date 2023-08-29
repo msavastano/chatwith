@@ -32,6 +32,8 @@ export default function Index() {
   const [model, setModel] = useState("gpt-3.5-turbo");
   const [apiError, setApiError] = useState('');
   const [temp, setTemp] = useState("5");
+  const [tokens, setTokens] = useState("180");
+
   const [generatingImage, setGeneratingImage] = useState(false);
 
   const configuration = new Configuration({
@@ -128,6 +130,10 @@ export default function Index() {
 
   const handleRangeChange = (e: ChangeEvent<HTMLInputElement>) => {
     setTemp(e.target.value);
+  };
+
+  const handleTokensRangeChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setTokens(e.target.value);
   };
 
   useEffect(() => {
@@ -254,6 +260,23 @@ export default function Index() {
               <span>|</span>
               <span>CREATIVE</span>
             </div>
+
+            <input
+              disabled={Boolean(personaSend)}
+              onChange={handleTokensRangeChange}
+              type="range"
+              min={30}
+              max={400}
+              value={tokens}
+              className="range range-primary mr-10 mt-5 disabled:opacity-30 w-11/12"
+            />
+            <div className="flex w-11/12 justify-between px-2 text-xs">
+              <span>SHORTER</span>
+              <span>|</span>
+              <span>|</span>
+              <span>|</span>
+              <span>LONGER</span>
+            </div>
           </div>
         </div>
       </div>
@@ -325,6 +348,7 @@ export default function Index() {
             model={model}
             setApiError={setApiError}
             temp={temp}
+            tokens={tokens}
           />
         </div>
       )}

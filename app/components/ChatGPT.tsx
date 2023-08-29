@@ -14,6 +14,7 @@ export function ChatGPT({
   model,
   setApiError,
   temp,
+  tokens
 }: {
   apikey: string | undefined;
   prompt: string;
@@ -24,6 +25,7 @@ export function ChatGPT({
   model: string;
   setApiError: React.Dispatch<React.SetStateAction<string>>;
   temp: string;
+  tokens: string;
 }) {
   const person = persona;
   const initMessages: Array<ChatCompletionResponseMessage> = [
@@ -80,6 +82,7 @@ export function ChatGPT({
           temperature: null,  // parseFloat(num.toFixed(1)),
           messages: [...messages, { role: "user", content: prompt }],
           top_p: parseFloat(num.toFixed(1)),
+          max_tokens: parseInt(tokens)
         },
         streamConfig
       );
