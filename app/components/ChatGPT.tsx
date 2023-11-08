@@ -44,6 +44,10 @@ export function ChatGPT({
   const [chatMessages, setChatMessages] = useState(initMessages);
 
   useEffect(() => {
+    setPrompt("");
+  }, [chatMessages]);
+
+  useEffect(() => {
     if (prompt) {
       setCompletionLoading(true);
       const num = parseInt(temp) * 0.1;
