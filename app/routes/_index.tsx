@@ -2,9 +2,9 @@ import type { V2_MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import type { LoaderArgs } from "@remix-run/server-runtime";
 import { json } from "@remix-run/server-runtime";
-import type { ImagesResponse } from "openai";
+// import type Image from "openai";
 import type { ChangeEvent } from "react";
-import { Configuration, OpenAIApi } from "openai";
+import OpenAI from "openai";
 import { useEffect, useState } from "react";
 import { ChatGPT } from "~/components/ChatGPT";
 
@@ -19,25 +19,25 @@ export const meta: V2_MetaFunction = () => {
 
 export default function Index() {
   const data = useLoaderData<typeof loader>();
-  const [prompt, setPrompt] = useState('');
-  const [promptSend, setPromptSend] = useState('');
-  const [persona, setPersona] = useState('');
-  const [personaSend, setPersonaSend] = useState('');
+  const [prompt, setPrompt] = useState("");
+  const [promptSend, setPromptSend] = useState("");
+  const [persona, setPersona] = useState("");
+  const [personaSend, setPersonaSend] = useState("");
   const [completionLoading, setCompletionLoading] = useState(false);
-  const [image, setImage] = useState<ImagesResponse>();
-  const [noImage, setNoImage] = useState('');
+  const [image, setImage] = useState<OpenAI.Images.ImagesResponse>();
+  const [noImage, setNoImage] = useState("");
   const [isImage, setIsImage] = useState(false);
-  const [key, setKey] = useState('');
-  const [useKey, setUseKey] = useState('');
+  const [key, setKey] = useState("");
+  const [useKey, setUseKey] = useState("My Api Key");
   const [model, setModel] = useState("gpt-3.5-turbo");
-  const [apiError, setApiError] = useState('');
+  const [apiError, setApiError] = useState("");
   const [temp, setTemp] = useState("5");
-  const [tokens, setTokens] = useState("180");
 
   const [generatingImage, setGeneratingImage] = useState(false);
 
-  const configuration = new Configuration({
+  const openai = new OpenAI({
     apiKey: useKey || data.apikey,
+    dangerouslyAllowBrowser: true,
   });
 
   const handleInputChange = () => {
@@ -46,16 +46,14 @@ export default function Index() {
 
   const handleModelChange = () => {
     if (model === "gpt-3.5-turbo") {
-      setModel("gpt-4");
+      setModel("gpt-4-1106-preview");
     } else {
       setModel("gpt-3.5-turbo");
     }
   };
 
-  const openai = new OpenAIApi(configuration);
-
   async function callDallE() {
-    return await openai.createImage({
+    return await openai.images.generate({
       prompt: `Cartoonish characature of ${persona}`,
       size: "256x256",
     });
@@ -71,23 +69,23 @@ export default function Index() {
   };
 
   const handleKeySet = () => {
-    setApiError('');
+    setApiError("");
     setUseKey(key);
-    setKey('');
+    setKey("");
   };
 
   const handleResetKey = () => {
-    setUseKey('');
-    setKey('');
+    setUseKey("My Api Key");
+    setKey("");
   };
 
   const handleResetPersona = () => {
-    setPersonaSend('');
-    setPersona('');
-    setPrompt('');
-    setPromptSend('');
-    setApiError('');
-    setNoImage('');
+    setPersonaSend("");
+    setPersona("");
+    setPrompt("");
+    setPromptSend("");
+    setApiError("");
+    setNoImage("");
   };
 
   const handleSend = () => {
@@ -105,14 +103,14 @@ export default function Index() {
     } else {
       setPersonaSend(persona);
     }
-    setPersona('');
+    setPersona("");
     setImage(undefined);
     if (persona.length > 0 && isImage) {
       setGeneratingImage(true);
       callDallE()
         .then((i) => {
           console.log(i);
-          setImage(i.data);
+          setImage(i);
         })
         .catch((err) => {
           if (err.message.includes("Request failed with status code 400")) {
@@ -130,10 +128,6 @@ export default function Index() {
 
   const handleRangeChange = (e: ChangeEvent<HTMLInputElement>) => {
     setTemp(e.target.value);
-  };
-
-  const handleTokensRangeChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setTokens(e.target.value);
   };
 
   useEffect(() => {
@@ -159,7 +153,7 @@ export default function Index() {
             <div className="card w-auto bg-base-100 shadow-xl">
               <div className="card-body">
                 <h2 className="card-title">API Key</h2>
-                {Boolean(useKey) && (
+                {useKey !== "My Api Key" && (
                   <p className="text-md ml-4 text-lime-900">
                     Your Open AI api key is being used. See{" "}
                     <a className="link" href="https://openai.com/pricing">
@@ -168,26 +162,29 @@ export default function Index() {
                   </p>
                 )}
 
-                
                 <div className="ml-4">
-                {!Boolean(useKey) && (
-                  <><input
-                      value={key}
-                      onChange={handleKeyChange}
-                      id="key"
-                      name="key"
-                      type="text"
-                      placeholder="OpenAI API Key"
-                      className="input-bordered input m-2 w-9/12"
-                      disabled={Boolean(useKey)} /><button
+                  {useKey === "My Api Key" && (
+                    <>
+                      <input
+                        value={key}
+                        onChange={handleKeyChange}
+                        id="key"
+                        name="key"
+                        type="text"
+                        placeholder="OpenAI API Key"
+                        className="input-bordered input m-2 w-9/12"
+                        disabled={useKey !== "My Api Key"}
+                      />
+                      <button
                         className="btn-primary btn"
                         onClick={handleKeySet}
-                        disabled={Boolean(useKey) || !Boolean(key)}
+                        disabled={useKey !== "My Api Key" || !Boolean(key)}
                       >
-                        {!Boolean(useKey) ? "Use" : "TY"}
-                      </button></>
+                        {useKey === "My Api Key" ? "Use" : "TY"}
+                      </button>
+                    </>
                   )}
-                  
+
                   {Boolean(useKey) && (
                     <button
                       className="btn-primary btn m-2"
@@ -210,7 +207,7 @@ export default function Index() {
               name="persona"
               type="text"
               placeholder="a very helpful assistant"
-              className="input m-2 w-10/12 border border-spacing-1 shadow-md rounded-lg"
+              className="input m-2 w-10/12 border-spacing-1 rounded-lg border shadow-md"
             />
             <button
               className="btn-primary btn"
@@ -221,13 +218,13 @@ export default function Index() {
             </button>
 
             <div className="flex flex-row">
-              <div className="form-control xl:w-1/3 border border-spacing-1 shadow-sm rounded-lg m-1">
+              <div className="form-control m-1 border-spacing-1 rounded-lg border shadow-sm xl:w-1/3">
                 <label className="label cursor-pointer">
                   <span className="label-text mr-1">GPT-4</span>
                   <input
                     type="checkbox"
                     className="toggle-primary toggle"
-                    checked={model === "gpt-4"}
+                    checked={model === "gpt-4-1106-preview"}
                     onChange={handleModelChange}
                     disabled={Boolean(personaSend)}
                   />
@@ -251,7 +248,7 @@ export default function Index() {
               min={1}
               max={10}
               value={temp}
-              className="range range-primary mr-10 mt-5 disabled:opacity-30 w-11/12"
+              className="range range-primary mr-10 mt-5 w-11/12 disabled:opacity-30"
             />
             <div className="flex w-11/12 justify-between px-2 text-xs">
               <span>CONSICE</span>
@@ -259,23 +256,6 @@ export default function Index() {
               <span>|</span>
               <span>|</span>
               <span>CREATIVE</span>
-            </div>
-
-            <input
-              disabled={Boolean(personaSend)}
-              onChange={handleTokensRangeChange}
-              type="range"
-              min={30}
-              max={400}
-              value={tokens}
-              className="range range-primary mr-10 mt-5 disabled:opacity-30 w-11/12"
-            />
-            <div className="flex w-11/12 justify-between px-2 text-xs">
-              <span>SHORTER</span>
-              <span>|</span>
-              <span>|</span>
-              <span>|</span>
-              <span>LONGER</span>
             </div>
           </div>
         </div>
@@ -339,7 +319,7 @@ export default function Index() {
             </button>
           </div>
           <ChatGPT
-            apikey={useKey || data.apikey}
+            openai={openai}
             prompt={promptSend}
             persona={personaSend}
             setPrompt={setPrompt}
@@ -348,7 +328,6 @@ export default function Index() {
             model={model}
             setApiError={setApiError}
             temp={temp}
-            tokens={tokens}
           />
         </div>
       )}
