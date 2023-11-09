@@ -10,7 +10,8 @@ import { ChatGPT } from "~/components/ChatGPT";
 
 export async function loader({ params, request }: LoaderArgs) {
   const apikey = process.env.OPENAI_API_KEY;
-  return json({ apikey });
+  const rtKey = process.env.RT_KEY;
+  return json({ apikey, rtKey });
 }
 
 export const meta: V2_MetaFunction = () => {
@@ -328,6 +329,7 @@ export default function Index() {
             model={model}
             setApiError={setApiError}
             temp={temp}
+            rtKey={data.rtKey || ''} 
           />
         </div>
       )}

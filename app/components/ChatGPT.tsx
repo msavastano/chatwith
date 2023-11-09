@@ -12,6 +12,20 @@ async function catfacts(limit = "1") {
   return data.data;
 }
 
+async function rt(movie: string, key: string) {
+  const response = await fetch(
+    `https://flixster.p.rapidapi.com/search?query=${movie}`,
+    {
+      headers: {
+        "X-RapidAPI-Key": key || "",
+        "X-RapidAPI-Host": "flixster.p.rapidapi.com",
+      },
+    }
+  );
+  const data = await response.json();
+  return data.data;
+}
+
 export function ChatGPT({
   prompt,
   persona,
@@ -22,6 +36,7 @@ export function ChatGPT({
   setApiError,
   temp,
   openai,
+  rtKey,
 }: {
   prompt: string;
   persona: string;
@@ -32,6 +47,7 @@ export function ChatGPT({
   setApiError: React.Dispatch<React.SetStateAction<string>>;
   temp: string;
   openai: OpenAI;
+  rtKey: string;
 }) {
   const person = persona;
   const initMessages: ChatCompletionMessageParam[] = [
@@ -52,12 +68,29 @@ export function ChatGPT({
       setCompletionLoading(true);
       const num = parseInt(temp) * 0.1;
       const fetchData = async () => {
+        // await rt('black widow', rtKey)
         const stream = openai.beta.chat.completions.stream({
           model,
           temperature: null,
           messages: [...messages, { role: "user", content: prompt }],
           top_p: parseFloat(num.toFixed(1)),
           functions: [
+            {
+              name: "rt",
+              description:
+                "Get the rotten tomatoes ratings and user ratings of movies",
+              parameters: {
+                type: "object",
+                properties: {
+                  movie: {
+                    type: "string",
+                    description:
+                      'The number of cat facts to return. Defaults to "1".',
+                  },
+                },
+                required: ["movie"],
+              },
+            },
             {
               name: "catfacts",
               description: "Get random cat facts",
@@ -112,6 +145,10 @@ export function ChatGPT({
             const args = JSON.parse(functionToUse.arguments) as any;
             dataToReturn = await catfacts(args.limit);
           }
+          if (functionToUse?.name === "rt") {
+            const args = JSON.parse(functionToUse.arguments) as any;
+            dataToReturn = await rt(args.movie, rtKey);
+          }
           const stream = openai.beta.chat.completions.stream({
             model,
             temperature: null,
@@ -133,7 +170,6 @@ export function ChatGPT({
           for await (const chunk of stream) {
             console.debug(chunk);
             ret2 += chunk.choices[0]?.delta?.content || "";
-            console.debug(chunk.choices[0]?.delta?.content || "");
             setMessages([
               ...messages,
               { role: "user", content: prompt },
@@ -163,13 +199,42 @@ export function ChatGPT({
     if (persona) {
       setMessages(initMessages);
       setChatMessages(initMessages);
+    } else {
+      async function fetchAssistant() {
+        const assistant = await openai.beta.assistants.create({
+          name: "Math Tutor",
+          instructions: "You are a react, typescript expert.",
+          tools: [{ type: "code_interpreter" }],
+          model: "gpt-4-1106-preview",
+        });
+
+        const thread = await openai.beta.threads.create();
+
+        openai.beta.threads.messages.create(thread.id, {
+          role: "user",
+          content:
+            "I need to create a react component takes in a list of strings and creates a crossword puzzle",
+        });
+
+        const run = await openai.beta.threads.runs.create(thread.id, {
+          assistant_id: assistant.id,
+          instructions: "Please address the user as Mike.",
+        });
+
+        await openai.beta.threads.runs.retrieve(thread.id, run.id);
+
+        const messages = await openai.beta.threads.messages.list(thread.id);
+
+        console.log(messages);
+      }
+      fetchAssistant();
     }
   }, [persona]);
 
   return (
     <>
       {completionLoading ? (
-        <progress className="progress w-56"></progress>
+        <progress className='progress w-56'></progress>
       ) : null}
       {chatMessages.map((message) => {
         const cl =
@@ -181,12 +246,12 @@ export function ChatGPT({
             key={message.content as string}
             className={`${cl} border-spacing-1 rounded-lg border p-3 shadow-md`}
           >
-            <p className="text-base-600 text-lg font-bold italic text-red-950">
+            <p className='text-base-600 text-lg font-bold italic text-red-950'>
               {message.role === "system" || message.role === "user"
                 ? ""
                 : `${person}`}
             </p>
-            <p className="text-xl">{message.content as string}</p>
+            <p className='text-xl'>{message.content as string}</p>
           </div>
         );
       })}
