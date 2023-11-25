@@ -1,9 +1,19 @@
+import React, { useEffect, useState } from "react";
 import type OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources";
-import * as React from "react";
-// import OpenAI from "openai";
 
-import { useEffect, useState } from "react";
+function getDateTime() {
+  let date = new Date();
+  return {
+    day: date.getDay(),
+    month: date.getMonth() + 1,
+    dayOfMonth: date.getDate(),
+    year: date.getFullYear(),
+    hours: date.getHours(),
+    minutes: date.getMinutes(),
+    seconds: date.getSeconds(),
+  };
+}
 
 // function that calls catfacts api - https://catfact.ninja/fact
 async function catfacts(limit = "1") {
@@ -24,6 +34,20 @@ async function rt(movie: string, key: string) {
   );
   const data = await response.json();
   return data.data;
+}
+
+async function weather(city: string, key: string) {
+  const response = await fetch(
+    `https://weatherapi-com.p.rapidapi.com/current.json?q=${city}`,
+    {
+      headers: {
+        "X-RapidAPI-Key": key,
+        "X-RapidAPI-Host": "weatherapi-com.p.rapidapi.com",
+      },
+    }
+  );
+  const data = await response.json();
+  return data;
 }
 
 export function ChatGPT({
@@ -68,13 +92,23 @@ export function ChatGPT({
       setCompletionLoading(true);
       const num = parseInt(temp) * 0.1;
       const fetchData = async () => {
-        // await rt('black widow', rtKey)
         const stream = openai.beta.chat.completions.stream({
+          stream: true,
           model,
           temperature: null,
           messages: [...messages, { role: "user", content: prompt }],
           top_p: parseFloat(num.toFixed(1)),
+          function_call: "auto",
           functions: [
+            {
+              name: "getDateTime",
+              description: "Get the current date and time.",
+              parameters: {
+                type: "object",
+                properties: {},
+                require: [],
+              },
+            },
             {
               name: "rt",
               description:
@@ -89,6 +123,20 @@ export function ChatGPT({
                   },
                 },
                 required: ["movie"],
+              },
+            },
+            {
+              name: "weather",
+              description: "Get the current weather of a city",
+              parameters: {
+                type: "object",
+                properties: {
+                  city: {
+                    type: "string",
+                    description: "The location to check the weather of",
+                  },
+                },
+                required: ["city"],
               },
             },
             {
@@ -107,8 +155,6 @@ export function ChatGPT({
               },
             },
           ],
-          function_call: "auto",
-          stream: true,
         });
 
         let ret = "";
@@ -148,6 +194,13 @@ export function ChatGPT({
           if (functionToUse?.name === "rt") {
             const args = JSON.parse(functionToUse.arguments) as any;
             dataToReturn = await rt(args.movie, rtKey);
+          }
+          if (functionToUse?.name === "getDateTime") {
+            dataToReturn = getDateTime();
+          }
+          if (functionToUse?.name === "weather") {
+            const args = JSON.parse(functionToUse.arguments) as any;
+            dataToReturn = await weather(args.city, rtKey);
           }
           const stream = openai.beta.chat.completions.stream({
             model,
@@ -199,62 +252,39 @@ export function ChatGPT({
     if (persona) {
       setMessages(initMessages);
       setChatMessages(initMessages);
-    } else {
-      async function fetchAssistant() {
-        const assistant = await openai.beta.assistants.create({
-          name: "Math Tutor",
-          instructions: "You are a react, typescript expert.",
-          tools: [{ type: "code_interpreter" }],
-          model: "gpt-4-1106-preview",
-        });
-
-        const thread = await openai.beta.threads.create();
-
-        openai.beta.threads.messages.create(thread.id, {
-          role: "user",
-          content:
-            "I need to create a react component takes in a list of strings and creates a crossword puzzle",
-        });
-
-        const run = await openai.beta.threads.runs.create(thread.id, {
-          assistant_id: assistant.id,
-          instructions: "Please address the user as Mike.",
-        });
-
-        await openai.beta.threads.runs.retrieve(thread.id, run.id);
-
-        const messages = await openai.beta.threads.messages.list(thread.id);
-
-        console.log(messages);
-      }
-      fetchAssistant();
     }
   }, [persona]);
 
   return (
     <>
       {completionLoading ? (
-        <progress className='progress w-56'></progress>
+        <progress className="progress w-56"></progress>
       ) : null}
-      {chatMessages.map((message) => {
-        const cl =
-          message.role !== "system" && message.role !== "user"
-            ? "bg-gray-200 mb-7 mt-2 mr-2 ml-2"
-            : "bg-inherit m-2";
-        return (
-          <div
-            key={message.content as string}
-            className={`${cl} border-spacing-1 rounded-lg border p-3 shadow-md`}
-          >
-            <p className='text-base-600 text-lg font-bold italic text-red-950'>
-              {message.role === "system" || message.role === "user"
-                ? ""
-                : `${person}`}
-            </p>
-            <p className='text-xl'>{message.content as string}</p>
-          </div>
-        );
-      })}
+      {chatMessages
+        .filter((message) => message.role !== "system")
+        .map((message) => {
+          const cl =
+            message.role !== "user"
+              ? "bg-gray-200 mb-7 mt-2 mr-2 ml-2"
+              : "bg-inherit m-2";
+          return (
+            <>
+              <div
+                key={message.content as string}
+                className={`${cl} border-spacing-1 rounded-lg border p-3 shadow-md`}
+              >
+                <p className="text-base-600 text-sm font-bold italic text-red-950">
+                  {message.role === "system" || message.role === "user"
+                    ? ""
+                    : `${person}`}
+                </p>
+                <p className="whitespace-pre-wrap text-sm">
+                  {message.content as string}
+                </p>
+              </div>
+            </>
+          );
+        })}
     </>
   );
 }

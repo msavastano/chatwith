@@ -2,12 +2,10 @@ import type { V2_MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import type { LoaderArgs } from "@remix-run/server-runtime";
 import { json } from "@remix-run/server-runtime";
-// import type Image from "openai";
 import type { ChangeEvent } from "react";
 import OpenAI from "openai";
 import { useEffect, useState } from "react";
 import { ChatGPT } from "~/components/ChatGPT";
-
 export async function loader({ params, request }: LoaderArgs) {
   const apikey = process.env.OPENAI_API_KEY;
   const rtKey = process.env.RT_KEY;
@@ -30,14 +28,14 @@ export default function Index() {
   const [isImage, setIsImage] = useState(false);
   const [key, setKey] = useState("");
   const [useKey, setUseKey] = useState("My Api Key");
-  const [model, setModel] = useState("gpt-3.5-turbo");
+  const [model, setModel] = useState("gpt-3.5-turbo-1106");
   const [apiError, setApiError] = useState("");
   const [temp, setTemp] = useState("5");
 
   const [generatingImage, setGeneratingImage] = useState(false);
 
   const openai = new OpenAI({
-    apiKey: useKey || data.apikey,
+    apiKey: data.apikey || useKey,
     dangerouslyAllowBrowser: true,
   });
 
@@ -46,17 +44,18 @@ export default function Index() {
   };
 
   const handleModelChange = () => {
-    if (model === "gpt-3.5-turbo") {
+    if (model === "gpt-3.5-turbo-1106") {
       setModel("gpt-4-1106-preview");
     } else {
-      setModel("gpt-3.5-turbo");
+      setModel("gpt-3.5-turbo-1106");
     }
   };
 
   async function callDallE() {
     return await openai.images.generate({
       prompt: `Cartoonish characature of ${persona}`,
-      size: "256x256",
+      size: "1024x1024",
+      model: "dall-e-3",
     });
   }
 
@@ -329,7 +328,7 @@ export default function Index() {
             model={model}
             setApiError={setApiError}
             temp={temp}
-            rtKey={data.rtKey || ''} 
+            rtKey={data.rtKey || ""}
           />
         </div>
       )}
