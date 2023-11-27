@@ -25,6 +25,7 @@
     "@architect/architect": "^10.11.2",
     "@remix-run/dev": "^1.15.0",
     "@remix-run/eslint-config": "^1.15.0",
+    "@tailwindcss/typography": "^0.5.10",
     "@types/react": "^18.0.35",
     "@types/react-dom": "^18.0.11",
     "daisyui": "^3.6.3",
