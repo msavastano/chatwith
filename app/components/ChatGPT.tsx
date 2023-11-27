@@ -36,6 +36,22 @@ async function rt(movie: string, key: string) {
   return data.data;
 }
 
+async function getStockInfo(symbol: string, key: string) {
+  const options = {
+    headers: {
+      'X-RapidAPI-Key': key || "",
+      'X-RapidAPI-Host': 'alpha-vantage.p.rapidapi.com'
+    }
+  };
+  const response = await fetch(
+    `https://alpha-vantage.p.rapidapi.com/query?function=TIME_SERIES_DAILY&symbol=${symbol}&outputsize=compact&datatype=json`,
+    {
+      headers: options.headers,
+    });
+  const data = await response.json();
+  return data;
+}
+
 async function weather(city: string, key: string) {
   const response = await fetch(
     `https://weatherapi-com.p.rapidapi.com/current.json?q=${city}`,
@@ -101,6 +117,21 @@ export function ChatGPT({
           function_call: "auto",
           functions: [
             {
+              name: "getStockInfo",
+              description: "Get the last 100 days of a company's stock value in USD (high, low, close, open, volume of each day).  Must pass the correct stock symbol",
+              parameters: {
+                type: "object",
+                properties: {
+                  symbol: {
+                    type: "string",
+                    description:
+                      'The symbol for the stock that user wnat information on',
+                  },
+                },
+                require: ["symbol"],
+              },
+            },
+            {
               name: "getDateTime",
               description: "Get the current date and time.",
               parameters: {
@@ -119,7 +150,7 @@ export function ChatGPT({
                   movie: {
                     type: "string",
                     description:
-                      'The number of cat facts to return. Defaults to "1".',
+                      "The movie title to get ratings for",
                   },
                 },
                 required: ["movie"],
@@ -194,6 +225,10 @@ export function ChatGPT({
           if (functionToUse?.name === "rt") {
             const args = JSON.parse(functionToUse.arguments) as any;
             dataToReturn = await rt(args.movie, rtKey);
+          }
+          if (functionToUse?.name === "getStockInfo") {
+            const args = JSON.parse(functionToUse.arguments) as any;
+            dataToReturn = await getStockInfo(args.symbol, rtKey);
           }
           if (functionToUse?.name === "getDateTime") {
             dataToReturn = getDateTime();
@@ -278,7 +313,7 @@ export function ChatGPT({
                     ? ""
                     : `${person}`}
                 </p>
-                <p className="whitespace-pre-wrap text-sm">
+                <p className="whitespace-pre-wrap">
                   {message.content as string}
                 </p>
               </div>

@@ -7,11 +7,24 @@ import { useEffect, useState } from "react";
 
 export async function loader({ params, request }: LoaderArgs) {
   const apikey = process.env.OPENAI_API_KEY;
-
-  return json({ apikey });
+  const rtKey = process.env.RT_KEY;
+  return json({ apikey, rtKey });
 }
 
 export default function Index() {
+  async function movie_ratings(movie: string, key: string) {
+    const response = await fetch(
+      `https://flixster.p.rapidapi.com/search?query=${movie}`,
+      {
+        headers: {
+          "X-RapidAPI-Key": key || "",
+          "X-RapidAPI-Host": "flixster.p.rapidapi.com",
+        },
+      }
+    );
+    const data = await response.json();
+    return data.data;
+  }
   const data = useLoaderData<typeof loader>();
   const [assistant, setAssistant] = useState<string>("");
   const [prompt, setPrompt] = useState("");
@@ -76,6 +89,23 @@ export default function Index() {
 
       while (runStatus.status !== "completed") {
         setCompletionLoading(true);
+        if (runStatus.status === 'requires_action') {
+          const promises = runStatus.required_action?.submit_tool_outputs.tool_calls.map(async (call) => {
+            if (call.function.name === 'movie_ratings') {
+              const args = JSON.parse(call.function.arguments) as any;
+              const k = data.rtKey || ''
+              const ret = await movie_ratings(args.movie, k)
+
+              return {
+                tool_call_id: call.id,
+                output: JSON.stringify(ret.search.movies)
+              }
+            }
+          });
+          const tool_outputs = await Promise.all(promises);
+          console.log(tool_outputs);
+          openai.beta.threads.runs.submitToolOutputs(thread.id, run.id, { tool_outputs: tool_outputs });
+        }
         await new Promise((resolve) => setTimeout(resolve, 2000));
         runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
         setCompletionLoading(false);
@@ -135,6 +165,17 @@ export default function Index() {
               name="radio-10"
               className="radio"
               value={"asst_0JJmJ8NnitleFBHZZdE94kPZ"}
+            />
+          </label>
+        </div>
+        <div className="form-control">
+          <label className="label cursor-pointer">
+            <span className="label-text">Movie Functions</span>
+            <input
+              type="radio"
+              name="radio-10"
+              className="radio"
+              value={"asst_XAg1kPuYuoBuZiorioAtppJU"}
             />
           </label>
         </div>
