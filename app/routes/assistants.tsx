@@ -72,8 +72,6 @@ export default function Index() {
   }
 
   async function books_data(title: string, author: string, key: string) {
-    // https://www.googleapis.com/books/v1/volumes?q=flowers+inauthor:keyes&key=AIzaSyAfcqizha1jFN_LoN6BxNZheIo3w4_bClo
-
     let params = ''
     if (title && author) {
       params = `?q=intitle:${title}+inauthor:${author}`
