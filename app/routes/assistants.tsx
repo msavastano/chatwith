@@ -8,7 +8,8 @@ import { useEffect, useState } from "react";
 export async function loader({ params, request }: LoaderArgs) {
   const apikey = process.env.OPENAI_API_KEY;
   const rtKey = process.env.RT_KEY;
-  return json({ apikey, rtKey });
+  const gBooksKey = process.env.GBOOKS_API_KEY;
+  return json({ apikey, rtKey, gBooksKey });
 }
 
 export default function Index() {
@@ -50,6 +51,48 @@ export default function Index() {
     const plotsData = await response.json();
     return plotsData;
   }
+
+  async function books_info(title: string, author: string) {
+    let params = ''
+    if (title && author) {
+      params = `?title=${title}&author${author}`
+    } else if (title) {
+      params = `?title=${title}`
+    } else if (author) {
+      params = `?author=${author}`
+    } else {
+      params = ''
+    }
+    const ret = await fetch(
+      `https://openlibrary.org/search.json${params}`,
+    );
+    const data = await ret.json();
+    
+    return data;
+  }
+
+  async function books_data(title: string, author: string, key: string) {
+    // https://www.googleapis.com/books/v1/volumes?q=flowers+inauthor:keyes&key=AIzaSyAfcqizha1jFN_LoN6BxNZheIo3w4_bClo
+
+    let params = ''
+    if (title && author) {
+      params = `?q=intitle:${title}+inauthor:${author}`
+    } else if (title) {
+      params = `?q=intitle:${title}`
+    } else if (author) {
+      params = `?q=inauthor:${author}`
+    } else {
+      params = '?q='
+    }
+    params = `${params}&key=${key}`
+    const ret = await fetch(
+      `https://www.googleapis.com/books/v1/volumes${params}`,
+    );
+    const data = await ret.json();
+    
+    return data;
+  }
+
   const data = useLoaderData<typeof loader>();
   const [useKey, setUseKey] = useState("My Api Key");
   const [key, setKey] = useState("")
@@ -151,6 +194,26 @@ export default function Index() {
               return {
                 tool_call_id: call.id,
                 output: JSON.stringify(ret.plots)
+              }
+            }
+
+            if (call.function.name === 'books_info') {
+              const args = JSON.parse(call.function.arguments) as any;
+              const ret = await books_info(args.title, args.author)
+
+              return {
+                tool_call_id: call.id,
+                output: JSON.stringify(ret)
+              }
+            }
+
+            if (call.function.name === 'books_data') {
+              const args = JSON.parse(call.function.arguments) as any;
+              const ret = await books_data(args.title, args.author, data.gBooksKey || '')
+
+              return {
+                tool_call_id: call.id,
+                output: JSON.stringify(ret)
               }
             }
           });
@@ -269,6 +332,17 @@ export default function Index() {
                 name="radio-10"
                 className="radio"
                 value={"asst_XAg1kPuYuoBuZiorioAtppJU"} />
+            </label>
+          </div>
+
+          <div className="form-control">
+            <label className="label cursor-pointer">
+              <span className="label-text">Books Functions</span>
+              <input
+                type="radio"
+                name="radio-10"
+                className="radio"
+                value={"asst_O2XAaTo4nUiiTY1aKAFA9Scn"} />
             </label>
           </div>
         </div>
