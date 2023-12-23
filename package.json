@@ -12,6 +12,8 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@google-ai/generativelanguage": "^2.0.0",
+    "@google/generative-ai": "^0.1.2",
     "@remix-run/architect": "^1.15.0",
     "@remix-run/node": "^1.15.0",
     "@remix-run/react": "^1.15.0",
